@@ -22,9 +22,6 @@ function subtract(a: Scores, b: Scores): Scores {
 type Selection = number | null;
 
 export const useQuizStore = defineStore("quiz", {
-  // -----------------------------------
-  // STATE
-  // -----------------------------------
   state: () => ({
     userName: "" as string,
     currentIndex: 0, // current question displayed
@@ -32,6 +29,103 @@ export const useQuizStore = defineStore("quiz", {
     selections: Array<Selection>(questions.length).fill(null) as Selection[], // user’s multiple-choice answers
     finished: false, // true if all questions answered
   }),
+  getters: {
+    // Total number of questions
+    totalQuestions: () => questions.length,
+
+    // % of questions answered
+    progress(state): number {
+      const answered = state.selections.filter((x) => x !== null).length;
+      return Math.round((answered / questions.length) * 100);
+    },
+
+    // Current question object
+    currentQuestion(state): Question {
+      return questions[state.currentIndex];
+    },
+
+    // Navigation helpers
+    isFirst(state): boolean {
+      return state.currentIndex === 0;
+    },
+    isLast(state): boolean {
+      return state.currentIndex === questions.length - 1;
+    },
+    isComplete(state): boolean {
+      return state.selections.every((x) => x !== null);
+    },
+
+    // Sorted list of houses by score (highest first, tie-break)
+    sortedHouses(state): HouseKey[] {
+      return [...KEYS].sort((a, b) => {
+        const diff = state.scores[b] - state.scores[a];
+        if (diff !== 0) return diff;
+        return KEYS.indexOf(a) - KEYS.indexOf(b);
+      });
+    },
+
+    // The current top house — the user’s likely result
+    topHouse(): HouseKey {
+      return this.sortedHouses[0];
+    },
+
+    // Expose full questions array for iteration
+    questions: () => questions,
+  },
+
+  actions: {
+/* On user selection, adjust score and question position */
+    selectAnswer(answerIndex: number) {
+      const qIdx = this.currentIndex;
+      const prevSel = this.selections[qIdx];
+      const nextSel = answerIndex;
+      if (prevSel === nextSel) return; // no change
+
+      // Calculate score: remove previous selection, add new one
+      const prevScores =
+        prevSel != null ? this.currentQuestion.answers[prevSel].scores : ZERO;
+      const nextScores = this.currentQuestion.answers[nextSel].scores;
+
+      this.scores = add(subtract(this.scores, prevScores), nextScores);
+      this.selections[qIdx] = nextSel;
+      // this.persist();
+    },
+
+    /** Move forward one question (if not at end). */
+    next() {
+      if (!this.isLast) this.currentIndex++;
+      // this.persist();
+    },
+
+    /** Move backward one question (if not at start). */
+    prev() {
+      if (!this.isFirst) this.currentIndex--;
+      // this.persist();
+    },
+
+    /** Jump to a specific question by index. */
+    goTo(index: number) {
+      if (index >= 0 && index < questions.length) {
+        this.currentIndex = index;
+        // this.persist();
+      }
+    },
+
+    /** Reset the entire quiz. */
+    reset() {
+      this.currentIndex = 0;
+      this.scores = { ...ZERO };
+      this.selections = Array<Selection>(questions.length).fill(null);
+      this.finished = false;
+      // this.persist();
+    },
+
+    /** Mark the quiz as complete */
+    finish() {
+      if (this.isComplete) {
+        this.finished = true;
+        // this.persist();
+      }
+    },
+  },
 });
-
-
