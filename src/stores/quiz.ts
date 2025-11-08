@@ -7,6 +7,10 @@ const questions = rawQuestions as Question[];
 // Baseline is zero in case there is nothing to add or subtract
 const ZERO: Scores = { g: 0, r: 0, h: 0, s: 0 };
 const KEYS: HouseKey[] = ["g", "r", "h", "s"];
+
+// Easy toggle from localStorage to STORAGE
+const STORAGE = localStorage;
+
 // Local Storage key for persistence
 const STORAGE_KEY = "sorting-hat-quiz";
 
@@ -141,6 +145,45 @@ export const useQuizStore = defineStore("quiz", {
         this.finished = true;
         // this.persist();
       }
+    },
+    hydrate() {
+      if (typeof window === "undefined") return; // SSR guard
+      try {
+        const raw = STORAGE.getItem(STORAGE_KEY);
+        if (!raw) return;
+
+        const data = JSON.parse(raw) as Partial<{
+          currentIndex: number;
+          scores: Scores;
+          selections: Selection[];
+          finished: boolean;
+          userName: string;
+        }>;
+
+        if (typeof data.currentIndex === "number")
+          this.currentIndex = data.currentIndex;
+        if (data.scores) this.scores = data.scores;
+        if (Array.isArray(data.selections)) this.selections = data.selections;
+        if (typeof data.finished === "boolean") this.finished = data.finished;
+        if (typeof data.userName === "string") this.userName = data.userName;
+      } catch {
+        /* ignore safely */
+      }
+    },
+
+    /** Save current progress into STORAGE. */
+    persist() {
+      if (typeof window === "undefined") return; // SSR guard
+      STORAGE.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          currentIndex: this.currentIndex,
+          scores: this.scores,
+          selections: this.selections,
+          finished: this.finished,
+          userName: this.userName,
+        })
+      );
     },
   },
 });
