@@ -41,7 +41,12 @@ export const useQuizStore = defineStore("quiz", {
 
     // Current question object
     currentQuestion(state): Question {
-      return questions[state.currentIndex];
+      return (
+        questions[state.currentIndex] ?? {
+          title: "",
+          answers: [],
+        }
+      );
     },
 
     // Navigation helpers
@@ -56,12 +61,13 @@ export const useQuizStore = defineStore("quiz", {
     },
 
     // Sorted list of houses by score (highest first, tie-break)
-    sortedHouses(state): HouseKey[] {
-      return [...KEYS].sort((a, b) => {
+    sortedHouses(state): Readonly<[HouseKey, HouseKey, HouseKey, HouseKey]> {
+      const arr = [...KEYS].sort((a, b) => {
         const diff = state.scores[b] - state.scores[a];
         if (diff !== 0) return diff;
         return KEYS.indexOf(a) - KEYS.indexOf(b);
-      });
+      }) as [HouseKey, HouseKey, HouseKey, HouseKey];
+      return arr;
     },
 
     // The current top house — the user’s likely result
@@ -74,17 +80,26 @@ export const useQuizStore = defineStore("quiz", {
   },
 
   actions: {
-/* On user selection, adjust score and question position */
+    /* On user selection, adjust score and question position */
     selectAnswer(answerIndex: number) {
       const qIdx = this.currentIndex;
       const prevSel = this.selections[qIdx];
       const nextSel = answerIndex;
       if (prevSel === nextSel) return; // no change
 
-      // Calculate score: remove previous selection, add new one
+      const cq = this.currentQuestion;
+
+      // safely read previous scores
       const prevScores =
-        prevSel != null ? this.currentQuestion.answers[prevSel].scores : ZERO;
-      const nextScores = this.currentQuestion.answers[nextSel].scores;
+        prevSel != null && cq.answers[prevSel]
+          ? cq.answers[prevSel].scores
+          : ZERO;
+
+      // Leave if out of bounds (unlikely because controlled in UX template)
+      const nextAnswer = cq.answers[nextSel];
+      if (!nextAnswer) return;
+
+      const nextScores = nextAnswer.scores;
 
       this.scores = add(subtract(this.scores, prevScores), nextScores);
       this.selections[qIdx] = nextSel;
