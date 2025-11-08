@@ -84,6 +84,11 @@ export const useQuizStore = defineStore("quiz", {
   },
 
   actions: {
+    setUserName(name: string) {
+      // TODO: add string utils for safety, trimming, capitalizing, etc.
+      this.userName = name.trim();
+      this.persist();
+    },
     /* On user selection, adjust score and question position */
     selectAnswer(answerIndex: number) {
       const qIdx = this.currentIndex;
@@ -107,26 +112,26 @@ export const useQuizStore = defineStore("quiz", {
 
       this.scores = add(subtract(this.scores, prevScores), nextScores);
       this.selections[qIdx] = nextSel;
-      // this.persist();
+      this.persist();
     },
 
     /** Move forward one question (if not at end). */
     next() {
       if (!this.isLast) this.currentIndex++;
-      // this.persist();
+      this.persist();
     },
 
     /** Move backward one question (if not at start). */
     prev() {
       if (!this.isFirst) this.currentIndex--;
-      // this.persist();
+      this.persist();
     },
 
     /** Jump to a specific question by index. */
     goTo(index: number) {
       if (index >= 0 && index < questions.length) {
         this.currentIndex = index;
-        // this.persist();
+        this.persist();
       }
     },
 
@@ -136,14 +141,14 @@ export const useQuizStore = defineStore("quiz", {
       this.scores = { ...ZERO };
       this.selections = Array<Selection>(questions.length).fill(null);
       this.finished = false;
-      // this.persist();
+      this.persist();
     },
 
     /** Mark the quiz as complete */
     finish() {
       if (this.isComplete) {
         this.finished = true;
-        // this.persist();
+        this.persist();
       }
     },
     hydrate() {
