@@ -11,7 +11,7 @@ type Msg = { role: "bot" | "user"; text: string; id: string; typing?: true };
 const messages = ref<Msg[]>([]);
 const scroller = ref<HTMLDivElement | null>(null);
 
-// de-dupe guards
+// de-dupe guards (i.e. unnecesary duplication)
 const lastQuestionShown = ref<number>(-1);
 const echoedSelections = new Set<string>();
 
@@ -31,14 +31,14 @@ function pushUser(text: string) {
   scrollToBottom();
 }
 
-// show typing as a message, then morph it into the real question in-place
+// show typing as a message, then change in-place (i.e. no extra DOM elements or staggeting)
 function showQuestionWithTyping(qText: string, delay = 450) {
   const id = uid();
-  // 1) push a typing message (same spot it will live)
+  // 1) push a typing message
   messages.value.push({ role: "bot", text: "", id, typing: true });
   scrollToBottom();
 
-  // 2) after delay, replace the SAME message (same id) with the real text
+  // 2) after delay, replace
   setTimeout(() => {
     const idx = messages.value.findIndex((m) => m.id === id);
     if (idx !== -1) {
@@ -61,7 +61,7 @@ watch(
   { immediate: true }
 );
 
-// echo the user’s choice once (slight delay so it feels natural)
+// echo the user’s choice once 
 watch(
   selections,
   (sel) => {
@@ -136,21 +136,4 @@ onMounted(scrollToBottom);
 .chat-leave-active { transition: all .14s ease; }
 .chat-enter-from { opacity: 0; transform: translateY(4px) scale(.99); }
 .chat-leave-to   { opacity: 0; transform: translateY(-4px) scale(.99); }
-</style>
-
-
-<style scoped>
-/* subtle slide/scale for chat lines */
-.chat-enter-active,
-.chat-leave-active {
-  transition: all 0.18s ease;
-}
-.chat-enter-from {
-  opacity: 0;
-  transform: translateY(6px) scale(0.98);
-}
-.chat-leave-to {
-  opacity: 0;
-  transform: translateY(-6px) scale(0.98);
-}
 </style>

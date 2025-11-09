@@ -27,7 +27,6 @@ function confirmName() {
     return;
   }
 
-  // Prefer using an action if you added it:
   quiz.setUserName(name);
 
   // TODO: replace with toast alert
