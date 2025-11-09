@@ -31,7 +31,7 @@ export const useQuizStore = defineStore("quiz", {
     currentIndex: 0, // current question displayed
     scores: { ...ZERO } as Scores, // accumulated points
     selections: Array<Selection>(questions.length).fill(null) as Selection[], // user’s multiple-choice answers
-    finished: false, // true if all questions answered
+    isFinished: false, // true if all questions answered
     messages: [] as ChatMsg[], // persisted chat messages
   }),
   getters: {
@@ -113,6 +113,9 @@ export const useQuizStore = defineStore("quiz", {
       this.scores = add(subtract(this.scores, prevScores), nextScores);
       this.selections[qIdx] = nextSel;
       this.persist();
+
+      // if all questions are answered, mark isFinished
+      if (this.isComplete) this.finish();
     },
 
     /** Move forward one question (if not at end). */
@@ -141,7 +144,7 @@ export const useQuizStore = defineStore("quiz", {
       this.currentIndex = 0;
       this.scores = { ...ZERO };
       this.selections = Array<Selection>(questions.length).fill(null);
-      this.finished = false;
+      this.isFinished = false;
       this.messages = [];
 
       // remove persistence
@@ -153,9 +156,11 @@ export const useQuizStore = defineStore("quiz", {
     /** Mark the quiz as complete */
     finish() {
       if (this.isComplete) {
-        this.finished = true;
+        this.isFinished = true;
         this.persist();
+        return true;
       }
+      return false;
     },
 
     // Chat actions for QuizChat.vue
@@ -199,7 +204,7 @@ export const useQuizStore = defineStore("quiz", {
           currentIndex: number;
           scores: Scores;
           selections: Selection[];
-          finished: boolean;
+          isFinished: boolean;
           userName: string;
           messages: ChatMsg[];
         }>;
@@ -208,7 +213,7 @@ export const useQuizStore = defineStore("quiz", {
           this.currentIndex = data.currentIndex;
         if (data.scores) this.scores = data.scores;
         if (Array.isArray(data.selections)) this.selections = data.selections;
-        if (typeof data.finished === "boolean") this.finished = data.finished;
+        if (typeof data.isFinished === "boolean") this.isFinished = data.isFinished;
         if (typeof data.userName === "string") this.userName = data.userName;
         if (Array.isArray(data.messages)) this.messages = data.messages;
       } catch {
@@ -225,7 +230,7 @@ export const useQuizStore = defineStore("quiz", {
           currentIndex: this.currentIndex,
           scores: this.scores,
           selections: this.selections,
-          finished: this.finished,
+          isFinished: this.isFinished,
           userName: this.userName,
           messages: this.messages,
         })

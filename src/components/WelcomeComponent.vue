@@ -61,6 +61,10 @@ function startOver() {
   quiz.reset();
   handleBegin();
 }
+
+onMounted(() => {
+  if (quiz.isFinished) router.replace("/result");
+});
 </script>
 
 <template>

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useQuizStore } from "../../stores/quizStore";
 
+const router = useRouter();
+
 const quiz = useQuizStore();
-const { currentQuestion, currentIndex, selections, messages } =
+const { currentQuestion, currentIndex, selections, messages, isFinished } =
   storeToRefs(quiz);
 
 const scroller = ref<HTMLDivElement | null>(null);
@@ -113,6 +116,10 @@ watch(
   },
   { deep: true }
 );
+
+watch(isFinished, (isDone) => {
+  if (isDone) router.push("/result");
+});
 
 onMounted(scrollToBottom);
 
