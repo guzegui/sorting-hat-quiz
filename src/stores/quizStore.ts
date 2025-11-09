@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import type { Question, Scores, HouseKey, ChatMsg } from "../types/quizTypes";
 import rawQuestions from "../data/sorting_hat.json";
+import { capitalizeFirstLetterOfEachWord } from "../utils/stringUtils";
 
 const questions = rawQuestions as Question[];
 // Baseline is zero in case there is nothing to add or subtract
@@ -85,8 +86,7 @@ export const useQuizStore = defineStore("quiz", {
 
   actions: {
     setUserName(name: string) {
-      // TODO: add string utils for safety, trimming, capitalizing, etc.
-      this.userName = name.trim();
+      this.userName = capitalizeFirstLetterOfEachWord(name);
       this.persist();
     },
     /* On user selection, adjust score and question position */
