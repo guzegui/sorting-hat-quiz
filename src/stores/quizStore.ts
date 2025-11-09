@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import type { Question, Scores, HouseKey, ChatMsg } from "../types/quiz";
+import type { Question, Scores, HouseKey, ChatMsg } from "../types/quizTypes";
 import rawQuestions from "../data/sorting_hat.json";
 
 const questions = rawQuestions as Question[];

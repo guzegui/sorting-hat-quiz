@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { useQuizStore } from "./stores/quiz";
+import { useQuizStore } from "./stores/quizStore";
 
 const quiz = useQuizStore();
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
-import { useQuizStore } from "../../stores/quiz";
+import { useQuizStore } from "../../stores/quizStore";
 
 const quiz = useQuizStore();
 const { progress, currentIndex, totalQuestions, userName } = storeToRefs(quiz);

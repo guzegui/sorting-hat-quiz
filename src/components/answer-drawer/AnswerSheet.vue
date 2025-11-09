@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useQuizStore } from '../../stores/quiz'
+import { useQuizStore } from '../../stores/quizStore'
 import BottomDrawer from './BottomDrawer.vue'
 
 const props = defineProps<{ modelValue: boolean }>()

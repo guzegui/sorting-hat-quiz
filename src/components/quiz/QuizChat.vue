@@ -1,19 +1,50 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref, watch } from "vue";
 import { storeToRefs } from "pinia";
-import { useQuizStore } from "../../stores/quiz";
+import { useQuizStore } from "../../stores/quizStore";
 
 const quiz = useQuizStore();
-const { currentQuestion, currentIndex, selections } = storeToRefs(quiz);
+const { currentQuestion, currentIndex, selections, messages } =
+  storeToRefs(quiz);
 
-// add "typing?: true" so a message can render as the dot bubble first
-type Msg = { role: "bot" | "user"; text: string; id: string; typing?: true };
-const messages = ref<Msg[]>([]);
 const scroller = ref<HTMLDivElement | null>(null);
 
 // de-dupe guards (i.e. unnecesary duplication)
-const lastQuestionShown = ref<number>(-1);
+const seenBotTexts = new Set<string>();
+const seenUserTexts = new Set<string>();
 const echoedSelections = new Set<string>();
+
+// Seed once, even if the store hydrates later
+let seeded = false;
+function seedGuards() {
+  if (seeded) return;
+
+  // seed bot/user text sets from existing messages
+  for (const m of messages.value) {
+    if (m.role === "bot" && m.text) seenBotTexts.add(m.text.trim());
+    if (m.role === "user" && m.text) seenUserTexts.add(m.text.trim());
+  }
+
+  // seed echoedSelections from current selections + already-present user bubbles
+  selections.value.forEach((pick, i) => {
+    if (pick == null) return;
+    const ans = quiz.currentQuestion.answers
+      ? quiz.questions[i]?.answers[pick]
+      : undefined;
+    const title = ans?.title?.trim();
+    if (!title) return;
+    if (
+      messages.value.some((m) => m.role === "user" && m.text?.trim() === title)
+    ) {
+      echoedSelections.add(`${i}:${pick}`);
+    }
+  });
+
+  seeded = true;
+}
+
+// run also if messages arrive after hydration
+watch(messages, () => seedGuards(), { immediate: true });
 
 const uid = () => Math.random().toString(36).slice(2);
 
@@ -27,41 +58,39 @@ function scrollToBottom() {
 }
 
 function pushUser(text: string) {
-  messages.value.push({ role: "user", text, id: uid() });
+  quiz.addMessage({ role: "user", text, id: uid() });
   scrollToBottom();
 }
 
-// show typing as a message, then change in-place (i.e. no extra DOM elements or staggeting)
 function showQuestionWithTyping(qText: string, delay = 450) {
+  const t = (qText || "").trim();
+  if (!t || seenBotTexts.has(t)) return; // extra guard for dupes
+
   const id = uid();
-  // 1) push a typing message
-  messages.value.push({ role: "bot", text: "", id, typing: true });
+  quiz.addMessage({ role: "bot", text: "", id, typing: true });
   scrollToBottom();
 
-  // 2) after delay, replace
   setTimeout(() => {
-    const idx = messages.value.findIndex((m) => m.id === id);
-    if (idx !== -1) {
-      messages.value[idx] = { role: "bot", text: qText, id }; // no typing flag
-      scrollToBottom();
-    }
+    // When patch.typing === undefined, delete
+    quiz.updateMessage(id, { text: qText, typing: undefined });
+    seenBotTexts.add(t); // remember it was shown
+    scrollToBottom();
   }, delay);
 }
 
 // when the question index changes, render typing -> question once
 watch(
   currentIndex,
-  (idx) => {
-    if (idx === lastQuestionShown.value) return;
+  () => {
     const t = (currentQuestion.value.title || "").trim();
     if (!t) return;
+    // if already shown, skip
+    if (seenBotTexts.has(t)) return;
     showQuestionWithTyping(t, 450);
-    lastQuestionShown.value = idx;
   },
-  { immediate: true }
+  { immediate: false }
 );
 
-// echo the user’s choice once 
 watch(
   selections,
   (sel) => {
@@ -73,19 +102,29 @@ watch(
     if (echoedSelections.has(key)) return;
 
     const a = currentQuestion.value.answers[pick];
-    if (!a?.title) return;
+    const title = a?.title?.trim();
+    if (!title || seenUserTexts.has(title)) return;
 
     setTimeout(() => {
-      pushUser(a.title);
+      pushUser(title);
       echoedSelections.add(key);
+      seenUserTexts.add(title);
     }, 180);
   },
   { deep: true }
 );
 
 onMounted(scrollToBottom);
-</script>
 
+// After seeding, post the initial question once if needed
+onMounted(() => {
+  // seedGuards already ran because of immediate:true
+  const t = (currentQuestion.value.title || "").trim();
+  if (t && !seenBotTexts.has(t)) {
+    showQuestionWithTyping(t, 450);
+  }
+});
+</script>
 
 <template>
   <div ref="scroller" class="h-[58vh] sm:h-[62vh] overflow-y-auto pr-1">
@@ -105,9 +144,11 @@ onMounted(scrollToBottom);
         <!-- bubble -->
         <div
           class="max-w-[80%] px-3 py-2 text-sm leading-relaxed border"
-          :class="m.role === 'bot'
-            ? 'bg-neutral-800/80 border-neutral-700 rounded-2xl rounded-tl-sm'
-            : 'bg-emerald-600/20 border-emerald-600/40 rounded-2xl rounded-tr-sm'"
+          :class="
+            m.role === 'bot'
+              ? 'bg-neutral-800/80 border-neutral-700 rounded-2xl rounded-tl-sm'
+              : 'bg-emerald-600/20 border-emerald-600/40 rounded-2xl rounded-tr-sm'
+          "
         >
           <template v-if="m.typing">
             <span class="inline-flex gap-1">
@@ -133,7 +174,15 @@ onMounted(scrollToBottom);
 <style scoped>
 /* Subtle, fast chat entrance to avoid visible 'jump' */
 .chat-enter-active,
-.chat-leave-active { transition: all .14s ease; }
-.chat-enter-from { opacity: 0; transform: translateY(4px) scale(.99); }
-.chat-leave-to   { opacity: 0; transform: translateY(-4px) scale(.99); }
+.chat-leave-active {
+  transition: all 0.14s ease;
+}
+.chat-enter-from {
+  opacity: 0;
+  transform: translateY(4px) scale(0.99);
+}
+.chat-leave-to {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.99);
+}
 </style>
