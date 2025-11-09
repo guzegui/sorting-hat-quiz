@@ -16,3 +16,5 @@ export interface Question {
   title: string;
   answers: Answer[];
 }
+
+export type ChatMsg = { role: "bot" | "user"; text: string; id: string; typing?: true };

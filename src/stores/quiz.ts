@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
-import { computed } from "vue";
-import type { Question, Scores, HouseKey } from "../types/quiz";
+import type { Question, Scores, HouseKey, ChatMsg } from "../types/quiz";
 import rawQuestions from "../data/sorting_hat.json";
 
 const questions = rawQuestions as Question[];
@@ -32,6 +31,7 @@ export const useQuizStore = defineStore("quiz", {
     scores: { ...ZERO } as Scores, // accumulated points
     selections: Array<Selection>(questions.length).fill(null) as Selection[], // user’s multiple-choice answers
     finished: false, // true if all questions answered
+    messages: [] as ChatMsg[], // persisted chat messages
   }),
   getters: {
     // Total number of questions
@@ -151,6 +151,38 @@ export const useQuizStore = defineStore("quiz", {
         this.persist();
       }
     },
+
+    // Chat actions for QuizChat.vue
+    addMessage(msg: ChatMsg) {
+      this.messages.push(msg);
+      this.persist();
+    },
+
+    // Id or role is not patched 
+    updateMessage(id: string, patch: Partial<Omit<ChatMsg, "id" | "role">>) {
+      const idx = this.messages.findIndex((m) => m.id === id); // prevent "possibly undefined"
+      if (idx < 0) return;
+
+      const current = this.messages[idx];
+      if (!current) return; // extra safety
+
+      // Merge
+      const merged: ChatMsg = { ...current, ...patch };
+
+      // To CLEAR the typing bubble, pass { typing: undefined }.
+      if ("typing" in patch && patch.typing === undefined) {
+        delete (merged as any).typing;
+      }
+
+      this.messages[idx] = merged;
+      this.persist();
+    },
+
+    clearMessages() {
+      this.messages = [];
+      this.persist();
+    },
+
     hydrate() {
       if (typeof window === "undefined") return; // SSR guard
       try {
@@ -163,6 +195,7 @@ export const useQuizStore = defineStore("quiz", {
           selections: Selection[];
           finished: boolean;
           userName: string;
+          messages: ChatMsg[];
         }>;
 
         if (typeof data.currentIndex === "number")
@@ -171,6 +204,7 @@ export const useQuizStore = defineStore("quiz", {
         if (Array.isArray(data.selections)) this.selections = data.selections;
         if (typeof data.finished === "boolean") this.finished = data.finished;
         if (typeof data.userName === "string") this.userName = data.userName;
+        if (Array.isArray(data.messages)) this.messages = data.messages;
       } catch {
         /* ignore safely */
       }
@@ -187,6 +221,7 @@ export const useQuizStore = defineStore("quiz", {
           selections: this.selections,
           finished: this.finished,
           userName: this.userName,
+          messages: this.messages,
         })
       );
     },
