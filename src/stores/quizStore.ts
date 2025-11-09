@@ -135,13 +135,19 @@ export const useQuizStore = defineStore("quiz", {
       }
     },
 
-    /** Reset the entire quiz. */
+    /** Reset the entire quiz tod defaults. */
     reset() {
+      this.userName = "";
       this.currentIndex = 0;
       this.scores = { ...ZERO };
       this.selections = Array<Selection>(questions.length).fill(null);
       this.finished = false;
-      this.persist();
+      this.messages = [];
+
+      // remove persistence
+      if (typeof window !== "undefined") {
+        STORAGE.removeItem(STORAGE_KEY);
+      }
     },
 
     /** Mark the quiz as complete */
@@ -158,7 +164,7 @@ export const useQuizStore = defineStore("quiz", {
       this.persist();
     },
 
-    // Id or role is not patched 
+    // Id or role is not patched
     updateMessage(id: string, patch: Partial<Omit<ChatMsg, "id" | "role">>) {
       const idx = this.messages.findIndex((m) => m.id === id); // prevent "possibly undefined"
       if (idx < 0) return;

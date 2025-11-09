@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { useQuizStore } from "../stores/quizStore";
 
@@ -10,8 +10,26 @@ const askingName = ref(false);
 const nameInput = ref("");
 const error = ref("");
 
+const hasName = computed(() => !!quiz.userName?.trim());
+
+onMounted(() => {
+  // In case hydrate is called elsewhere this is harmless;
+  // but ensures Welcome can work standalone too.
+  quiz.hydrate();
+
+  // If we already have a name, default to showing the “Continue / Start again” buttons
+  // (i.e., do NOT ask for name)
+  askingName.value = false;
+});
+
 function handleBegin() {
   askingName.value = true;
+  // seed with existing name if any (nice UX for edits)
+  nameInput.value = quiz.userName || "";
+  error.value = "";
+  nextTick(() => {
+    // input already has autofocus in template
+  });
 }
 
 function cancel() {
@@ -26,13 +44,22 @@ function confirmName() {
     error.value = "Please enter your name.";
     return;
   }
-
   quiz.setUserName(name);
+  router.push({ path: "/quiz" });
+}
 
-  // TODO: replace with toast alert
-  alert(`Welcome, ${name}!`);
+function continueOrBegin() {
+  if (hasName.value) {
+    router.push({ path: "/quiz" });
+  } else {
+    handleBegin();
+  }
+}
 
-  router.push({ path: "/quiz" }); //
+function startOver() {
+  // wipe everything and ask for a fresh name
+  quiz.reset();
+  handleBegin();
 }
 </script>
 
@@ -44,18 +71,37 @@ function confirmName() {
       <h1 class="text-4xl sm:text-5xl font-bold tracking-tight">
         Face the Sorting Hat!
       </h1>
-      <p class="text-neutral-400 text-lg sm:text-xl">
+
+      <!-- Dynamic subheading -->
+      <p v-if="!hasName" class="text-neutral-400 text-lg sm:text-xl">
         Find out which Harry Potter house you belong to
       </p>
+      <p v-else class="text-neutral-200 text-lg sm:text-xl">
+        Welcome back, <span class="font-semibold">{{ quiz.userName }}</span
+        >!
+      </p>
 
-      <!-- Begin button (hidden while asking for name) -->
-      <button
+      <!-- Primary actions (hidden while asking for name) -->
+      <div
         v-if="!askingName"
-        @click="handleBegin"
-        class="mt-8 px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all"
+        class="mt-8 flex items-center justify-center gap-3"
       >
-        Begin
-      </button>
+        <button
+          @click="continueOrBegin"
+          class="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all"
+        >
+          {{ hasName ? "Continue" : "Begin" }}
+        </button>
+
+        <!-- Only show Start again if we already have a name -->
+        <button
+          v-if="hasName"
+          @click="startOver"
+          class="px-6 py-3 rounded-2xl border border-neutral-700 hover:bg-neutral-800 text-neutral-100 font-semibold transition-all"
+        >
+          Start again
+        </button>
+      </div>
 
       <!-- Name prompt -->
       <div
