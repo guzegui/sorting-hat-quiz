@@ -16,22 +16,30 @@ function startAgain() {
   <section class="result-page">
     <ResultDetails />
 
-    <div class="actions" style="margin-top: 1rem;">
+    <div class="actions" style="margin-top: 1rem">
       <button type="button" @click="startAgain">Start again</button>
     </div>
   </section>
 </template>
 
 <style scoped>
-.result-page {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 1rem;
+
+/* Button centered under grid */
+.actions {
+  margin-top: 1.6rem;
+  text-align: center;
 }
 .actions button {
-  padding: .6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid #ddd;
+  padding: 0.7rem 1.2rem;
+  border: none;
+  background-color: #34d399;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
   cursor: pointer;
+}
+.actions button:hover {
+  background-color: #2bb47b;
 }
 </style>
