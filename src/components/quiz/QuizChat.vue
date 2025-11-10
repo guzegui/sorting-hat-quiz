@@ -179,17 +179,75 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Subtle, fast chat entrance to avoid visible 'jump' */
+/* Smooth, more pronounced chat animation */
 .chat-enter-active,
 .chat-leave-active {
-  transition: all 0.14s ease;
+  transition: transform 420ms var(--ease-page, cubic-bezier(0.22, 1, 0.36, 1)),
+    opacity 420ms var(--ease-page, cubic-bezier(0.22, 1, 0.36, 1));
 }
+
+/* Base enter */
 .chat-enter-from {
   opacity: 0;
-  transform: translateY(4px) scale(0.99);
+  transform: translateY(14px) scale(0.94);
 }
+
+/* Directional nudge by role */
+.justify-end.chat-enter-from {
+  /* user messages */
+  transform: translateY(14px) translateX(18px) scale(0.92);
+}
+.justify-start.chat-enter-from {
+  /* bot messages */
+  transform: translateY(10px) translateX(-10px) scale(0.94);
+}
+
+/* Keep the exit subtle */
 .chat-leave-to {
   opacity: 0;
-  transform: translateY(-4px) scale(0.99);
+  transform: translateY(-8px) scale(0.97);
+}
+
+/* --- User "pop/glow" pulse --- */
+@keyframes userBubblePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55);
+    transform: scale(0.92);
+  }
+  40% {
+    box-shadow: 0 0 0 16px rgba(16, 185, 129, 0.25);
+    transform: scale(1.05);
+  }
+  70% {
+    box-shadow: 0 0 0 22px rgba(16, 185, 129, 0.1);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    transform: scale(1);
+  }
+}
+.justify-end.chat-enter-active > div:nth-child(1) {
+  animation: userBubblePulse 800ms ease-out both;
+  will-change: box-shadow, transform;
+}
+
+/* --- User avatar pop --- */
+@keyframes userAvatarPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-8deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+.justify-end.chat-enter-active > div:nth-child(2) {
+  animation: userAvatarPop 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 </style>
