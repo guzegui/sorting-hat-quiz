@@ -1,15 +1,11 @@
 @import "tailwindcss";
 
-/* Design tokens (Tailwind v4 CSS-first) */
-@theme {
-  --dur-page: 600ms;
-  --ease-page: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
 /* Base (optional globals) */
 @layer base {
   :root {
     color-scheme: dark;
+    --dur-page: 600ms;
+    --ease-page: cubic-bezier(.22, 1, .36, 1);
   }
   html {
     scrollbar-gutter: stable;
