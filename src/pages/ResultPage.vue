@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { useQuizStore } from "../stores/quizStore";
-import ResultDetails from "../components/ResultDetails.vue";
+import ResultDetails from "../components/results/ResultDetails.vue";
 
 const router = useRouter();
 const quiz = useQuizStore();
@@ -15,7 +15,6 @@ function startAgain() {
 <template>
   <section class="result-page">
     <ResultDetails />
-
     <div class="actions" style="margin-top: 1rem">
       <button type="button" @click="startAgain">Start again</button>
     </div>
