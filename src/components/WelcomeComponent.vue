@@ -46,9 +46,9 @@ function confirmName() {
 
 function continueOrBegin() {
   if (hasName.value) {
-    router.push({ path: "/quiz" });
+    router.push("/quiz");
   } else {
-    handleBegin();
+    router.push("/name"); 
   }
 }
 

@@ -2,12 +2,21 @@ import { createRouter, createMemoryHistory } from "vue-router";
 import HomePage from "./pages/HomePage.vue";
 import QuizPage from "./pages/QuizPage.vue";
 import ResultPage from "./pages/ResultPage.vue";
+import NamePage from "./pages/NamePage.vue";
 import { useQuizStore } from "./stores/quizStore";
 
 const routes = [
   { path: "/", name: "home", component: HomePage },
-  { path: "/quiz", name: "quiz", component: QuizPage },
+  {
+    path: "/quiz",
+    component: QuizPage,
+    beforeEnter: () => {
+      const { userName } = useQuizStore();
+      if (!userName?.trim()) return "/name";
+    },
+  },
   { path: "/result", name: "result", component: ResultPage },
+  { path: "/name", component: NamePage },
 ];
 
 export const router = createRouter({
