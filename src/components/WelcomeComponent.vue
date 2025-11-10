@@ -13,10 +13,6 @@ const error = ref("");
 const hasName = computed(() => !!quiz.userName?.trim());
 
 onMounted(() => {
-  // In case hydrate is called elsewhere this is harmless;
-  // but ensures Welcome can work standalone too.
-  quiz.hydrate();
-
   // If we already have a name, default to showing the “Continue / Start again” buttons
   // (i.e., do NOT ask for name)
   askingName.value = false;
