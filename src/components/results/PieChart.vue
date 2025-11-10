@@ -77,9 +77,14 @@ onBeforeUnmount(() => {
 watch(
   () => [props.labels, props.values, props.total],
   () => {
-    if (!chartInstance) return buildChart();
+    if (!chartInstance) return buildChart(); // runtime guard just in case!
+
     chartInstance.data.labels = props.labels;
-    chartInstance.data.datasets[0].data = props.values;
+
+    const ds = chartInstance.data.datasets?.[0];
+    if (!ds) return; // rebuild if need be 
+    ds.data = props.values;
+
     chartInstance.update();
   },
   { deep: true }
