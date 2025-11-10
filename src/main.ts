@@ -5,6 +5,6 @@ import { createPinia } from "pinia";
 import { router } from "./router";
 
 const app = createApp(App);
+app.use(createPinia()); // pinia before router so route guard works
 app.use(router);
-app.use(createPinia());
 app.mount("#app");
