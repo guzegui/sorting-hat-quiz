@@ -1,31 +1,20 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useQuizStore } from "../stores/quizStore";
-import type { HouseKey } from "../types/quizTypes";
+import { houseNames } from "../types/quizTypes";
 
 const quiz = useQuizStore();
 
-const houseNames: Record<HouseKey, string> = {
-  g: "Gryffindor",
-  r: "Ravenclaw",
-  h: "Hufflepuff",
-  s: "Slytherin",
-};
-
 const topHouseName = computed(() => houseNames[quiz.topHouse]);
 
-// If you want the breakdown displayed in a stable, classic G/R/H/S order:
-const breakdown = computed(() => [
-  { key: "g" as HouseKey, label: "Gryffindor", points: quiz.scores.g },
-  { key: "r" as HouseKey, label: "Ravenclaw", points: quiz.scores.r },
-  { key: "h" as HouseKey, label: "Hufflepuff", points: quiz.scores.h },
-  { key: "s" as HouseKey, label: "Slytherin", points: quiz.scores.s },
-]);
-
-// (Optional) If you prefer showing from highest to lowest, use:
-// const breakdown = computed(() =>
-//   quiz.sortedHouses.map(k => ({ key: k, label: houseNames[k], points: quiz.scores[k] }))
-// );
+// Score display in descending order
+const breakdown = computed(() =>
+  quiz.sortedHouses.map((k) => ({
+    key: k,
+    label: houseNames[k],
+    points: quiz.scores[k],
+  }))
+);
 </script>
 
 <template>
@@ -51,7 +40,7 @@ const breakdown = computed(() => [
   margin: 0;
 }
 .scores li {
-  padding: .35rem 0;
+  padding: 0.35rem 0;
   border-bottom: 1px dashed #e6e6e6;
 }
 .scores li:last-child {

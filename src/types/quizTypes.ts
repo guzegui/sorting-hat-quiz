@@ -1,4 +1,11 @@
-export type HouseKey = "g" | "r" | "h" | "s"; // Gryffindor, Ravenclaw, Hufflepuff, Slytherin
+export type HouseKey = "g" | "r" | "h" | "s"; 
+
+export const houseNames: Record<HouseKey, string> = {
+  g: "Gryffindor",
+  r: "Ravenclaw",
+  h: "Hufflepuff",
+  s: "Slytherin",
+};
 
 export interface Scores {
   g: number;
