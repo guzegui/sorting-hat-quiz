@@ -1,1 +1,56 @@
 @import "tailwindcss";
+
+/* Design tokens (Tailwind v4 CSS-first) */
+@theme {
+  --dur-page: 600ms;
+  --ease-page: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Base (optional globals) */
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  html {
+    scrollbar-gutter: stable;
+  } /* reserves space for the scrollbar */
+  @supports not (scrollbar-gutter: stable) {
+    body {
+      overflow-y: scroll;
+    } /* always show vertical scrollbar track */
+  }
+}
+
+/* Page transition classes used by <Transition name="page-transition"> */
+@layer components {
+  .page-transition-enter-from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .page-transition-enter-active {
+    transition: opacity var(--dur-page) var(--ease-page),
+      transform var(--dur-page) var(--ease-page);
+  }
+
+  .page-transition-enter-to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .page-transition-leave-from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .page-transition-leave-to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .page-transition-leave-active {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+  }
+}
